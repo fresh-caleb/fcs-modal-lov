@@ -395,6 +395,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
 
       // Store last searchTerm
       self._lastSearchTerm = searchTerm
+      apex.debug.trace('FCSModalLOV - Store last searchTerm:', searchTerm);
 
       apex.server.plugin(self.options.ajaxIdentifier, {
         x01: 'GET_DATA',
@@ -417,9 +418,10 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
     },
 
     _initSearch: function () {
-      var self = this
+      const self = this;
       // if the lastSearchTerm is not equal to the current searchTerm, then search immediate
       if (self._lastSearchTerm !== self._topApex.item(self.options.searchField).getValue()) {
+        apex.debug.trace('FCSModalLOV - _initSearch field', self._topApex.item(self.options.searchField).getValue());
         self._getData({
           firstRow: 1,
           loadingIndicator: self._modalLoadingIndicator,
@@ -509,6 +511,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
       // Remove previous modal-lov region
       $('#' + self.options.id, document).remove()
 
+      apex.debug.trace('FCSModalLOV - _openLOV searchTerm:', options.searchTerm);
       self._getData({
         firstRow: 1,
         searchTerm: options.searchTerm,
@@ -552,7 +555,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
         var index = focusable.indexOf(document.activeElement);
         if (index > -1) {
           var nextElement = focusable[index + 1] || focusable[0];
-          apex.debug.trace('FCS LOV - focus next');
+          apex.debug.trace('FCSModalLOV - focus next');
           nextElement.focus();
 
           // CW: interactive grid hack - tab next when there are cascading child columns
@@ -592,7 +595,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
         var index = focusable.indexOf(document.activeElement);
         if (index > -1) {
           var prevElement = focusable[index - 1] || focusable[0];
-          apex.debug.trace('FCS LOV - focus previous');
+          apex.debug.trace('FCSModalLOV - focus previous');
           prevElement.focus();
 
           // CW: interactive grid hack - tab next when there are cascading child columns
@@ -650,7 +653,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
       var self = this
 
       if (calledFrom) {
-        apex.debug.trace('_triggerLOVOnDisplay called from "' + calledFrom + '"');
+        apex.debug.trace('FCSModalLOV - _triggerLOVOnDisplay called from "' + calledFrom + '"');
       }
 
       self.options.readOnly = $('#' + self.options.itemName).prop('readOnly')
@@ -693,7 +696,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
           return;
         }
 
-        // console.log('click off - check value')
+        apex.debug.trace('FCSModalLOV - click off - check value:', self._item$.val());
         self._getData({
           searchTerm: self._item$.val(),
           firstRow: 1,
@@ -704,6 +707,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
             self._setItemValues(self._templateData.report.rows[0].returnVal);
             self._triggerLOVOnDisplay('006 - click off match found')
           } else {
+            apex.debug.trace('FCSModalLOV - 006 - No single match found, open modal');
             // Open the modal
             self._openLOV({
               searchTerm: self._item$.val(),
@@ -724,7 +728,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
         self._item$.off('keydown')
         $(document).off('mousedown')
 
-        // console.log('keydown', e.keyCode)
+        // apex.debug.trace('FCSModalLOV - keydown', e.keyCode)
 
         if ((e.keyCode === 9 && !!self._item$.val()) || e.keyCode === 13) {
           // No changes, no further processing (if not enter press on empty input).
@@ -746,7 +750,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
             e.stopPropagation();
           }
 
-          // console.log('keydown tab or enter - check value')
+          apex.debug.trace('FCSModalLOV - keydown tab or enter - check value:', self._item$.val());
           self._getData({
             searchTerm: self._item$.val(),
             firstRow: 1,
@@ -772,6 +776,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
               self._restoreChildValidation(prevValidity);
               self._triggerLOVOnDisplay('007 - key off match found');
             } else {
+              apex.debug.trace('FCSModalLOV - 007 - no single match found, open modal');
               // Open the modal
               self._openLOV({
                 searchTerm: self._item$.val(),
@@ -801,7 +806,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
           var columnId = self._grid.getColumns()?.find(col => colName?.includes(col.property))?.elementId;
           var column = self._ig$.interactiveGrid('option').config.columns.find(col => col.staticId === columnId);
           var item = apex.item(columnId);
-          apex.debug.trace('found child column', column);
+          apex.debug.trace('FCSModalLOV - found child column', column);
           // Don't turn off validation if the item has a value.
           if (!item || !column || (item && item.getValue())) {
             return;
@@ -814,7 +819,9 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
           });
           // Turn off validation
           column.validation.isRequired = false;
-          item.getValidity = function () { return { valid: true };};
+          item.getValidity = function () {
+            return { valid: true };
+          };
         });
       }
 
@@ -831,7 +838,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
     },
 
     _triggerLOVOnButton: function () {
-      var self = this
+      const self = this;
       // Trigger event on click input group addon button (magnifier glass)
       self._searchButton$.on('click', function (e) {
         self._openLOV({
@@ -930,6 +937,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
 
       apex.item(self.options.itemName).setValue(self._unescape($row.data('return').toString()), self._unescape($row.data('display')))
 
+      apex.debug.trace('FCSModalLOV - return value:', $row.data('return'), ', display:', $row.data('display'));
 
       // Trigger a custom event and add data to it: all columns of the row
       var data = {}
@@ -945,6 +953,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
       var self = this
       // Action when row is clicked
       self._modalDialog$.on('click', '.modal-lov-table .t-Report-report tbody tr', function (e) {
+        apex.debug.trace('FCSModalLOV - row clicked');
         self._returnSelectedRow(self._topApex.jQuery(this))
       })
     },
