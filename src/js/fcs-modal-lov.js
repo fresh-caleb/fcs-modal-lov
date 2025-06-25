@@ -135,14 +135,24 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
     _onOpenDialog: function (modal, options) {
       var self = options.widget
       self._modalDialog$ = self._topApex.jQuery(modal)
+      const searchField$ = self._topApex.jQuery('#' + self.options.searchField);
+      self._clearInputLg$ = searchField$?.parent()?.find('.fcs-search-clear-lg');
       // Focus on search field in LOV
-      self._topApex.jQuery('#' + self.options.searchField)[0].focus()
+      searchField$[0].focus()
       // Remove validation results
       self._removeValidation()
       // Add text from display field
       if (options.fillSearchText) {
-        self._topApex.item(self.options.searchField).setValue(self._item$.val())
+        const itemId = self._item$[0].id;
+        let searchTerm = self._item$.val();
+        if (!apex.item(itemId).isEmpty()) {
+          // Use item value (instead of display value) to prefill search field
+          searchTerm = apex.item(itemId).getValue()
+        }
+        self._topApex.item(self.options.searchField).setValue(searchTerm)
       }
+      // Clear text when clear icon lg is clicked
+      self._initClearInputLg()
       // Add class on hover
       self._onRowHover()
       // selectInitialRow
@@ -418,9 +428,20 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
     },
 
     _initSearch: function () {
-      const self = this;
+      var self = this
+
+      const itemId = self._item$[0].id;
+      apex.debug.trace('FCSModalLOV - _initSearch itemId:', itemId);
+      let lastSearchTerm = self._lastSearchTerm;
+      if (!apex.item(itemId)?.isEmpty()) {
+        const displayValue = apex.item(itemId)?.displayValueFor(self._lastSearchTerm);
+        if (displayValue) {
+          lastSearchTerm = displayValue;
+        }
+      }
+
       // if the lastSearchTerm is not equal to the current searchTerm, then search immediate
-      if (self._lastSearchTerm !== self._topApex.item(self.options.searchField).getValue()) {
+      if (lastSearchTerm !== self._topApex.item(self.options.searchField).getValue()) {
         apex.debug.trace('FCSModalLOV - _initSearch field', self._topApex.item(self.options.searchField).getValue());
         self._getData({
           firstRow: 1,
@@ -696,9 +717,17 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
           return;
         }
 
-        apex.debug.trace('FCSModalLOV - click off - check value:', self._item$.val());
+        const itemId = self._item$[0].id;
+        let searchTerm = '';
+        if (apex.item(itemId).isEmpty()) {
+          searchTerm = self._item$.val();
+        } else {
+          searchTerm = apex.item(itemId).getValue()
+        }
+        apex.debug.trace('FCSModalLOV - click off - check value:', searchTerm,
+          apex.item(itemId).hasDisplayValue ? '(' + apex.item(itemId).displayValueFor(searchTerm) + ')' : '');
         self._getData({
-          searchTerm: self._item$.val(),
+          searchTerm,
           firstRow: 1,
           // loadingIndicator: self._modalLoadingIndicator
         }, function () {
@@ -710,7 +739,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
             apex.debug.trace('FCSModalLOV - 006 - No single match found, open modal');
             // Open the modal
             self._openLOV({
-              searchTerm: self._item$.val(),
+              searchTerm,
               fillSearchText: true,
               afterData: function (options) {
                 self._onLoad(options)
@@ -750,9 +779,17 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
             e.stopPropagation();
           }
 
-          apex.debug.trace('FCSModalLOV - keydown tab or enter - check value:', self._item$.val());
+          const itemId = self._item$[0].id;
+          let searchTerm = '';
+          if (apex.item(itemId).isEmpty()) {
+            searchTerm = self._item$.val();
+          } else {
+            searchTerm = apex.item(itemId).getValue()
+          }
+          apex.debug.trace('FCSModalLOV - keydown tab or enter - check value:', searchTerm,
+            apex.item(itemId).hasDisplayValue ? '(' + apex.item(itemId).displayValueFor(searchTerm) + ')' : '');
           self._getData({
-            searchTerm: self._item$.val(),
+            searchTerm,
             firstRow: 1,
             // loadingIndicator: self._modalLoadingIndicator
           }, function () {
@@ -779,7 +816,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
               apex.debug.trace('FCSModalLOV - 007 - no single match found, open modal');
               // Open the modal
               self._openLOV({
-                searchTerm: self._item$.val(),
+                searchTerm,
                 fillSearchText: true,
                 afterData: function (options) {
                   self._onLoad(options)
@@ -841,8 +878,12 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
       const self = this;
       // Trigger event on click input group addon button (magnifier glass)
       self._searchButton$.on('click', function (e) {
+        const itemId = self._item$?.length && self._item$[0]?.id;
+        const searchTerm = apex.item(itemId)?.getValue() || '';
+        apex.debug.trace('FCSModalLOV - _triggerLOVOnButton value:', searchTerm);
+
         self._openLOV({
-          searchTerm: self._item$.val() || '',
+          searchTerm,
           fillSearchText: true,
           afterData: function (options) {
             self._onLoad(options)
@@ -973,11 +1014,32 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
       }
     },
 
+    _clearInputLg: function () {
+      var self = this;
+      // Clear text
+      self._topApex.item(self.options.searchField).setValue('');
+      // Reload data
+      self._getData({
+        firstRow: 1,
+        loadingIndicator: self._modalLoadingIndicator,
+      }, function () {
+        self._onReload()
+      })
+    },
+
     _initClearInput: function () {
       var self = this
 
       self._clearInput$.on('click', function () {
         self._clearInput()
+      })
+    },
+
+    _initClearInputLg: function () {
+      var self = this
+
+      self._clearInputLg$.on('click', function () {
+        self._clearInputLg()
       })
     },
 

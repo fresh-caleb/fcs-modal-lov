@@ -1,14 +1,20 @@
 // Styling for the clear search icon
 .t-Form-inputContainer, .a-GV-columnItem {
-  .fcs-search-clear {
+  .fcs-search-clear,
+  .fcs-search-clear-lg {
     order: 3;
-    transform: translateX(-50px);
     align-self: center;
     height: 14px;
     margin-right: -14px;
     font-size: 14px;
     cursor: pointer;
     z-index: 1;
+  }
+  .fcs-search-clear {
+    transform: translateX(-50px);
+  }
+  .fcs-search-clear-lg {
+    transform: translateX(-60px);
   }
 }
 .u-RTL .t-Form-inputContainer .fcs-search-clear, .u-RTL .a-GV-columnItem .fcs-search-clear {
@@ -66,11 +72,17 @@
     position: absolute;
     top: 0; left: 0; bottom: 0; right: 0;
   }
-  .t-Form-inputContainer input.modal-lov-item {
+  .t-Form-inputContainer input.modal-lov-item,
+  .t-Form-inputContainer input.modal-lov-item-lg {
     margin: 0;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+  }
+  .t-Form-inputContainer input.modal-lov-item {
     padding-right: 35px !important;
+  }
+  .t-Form-inputContainer input.modal-lov-item-lg {
+    padding-right: 65px !important;
   }
 
   .modal-lov-table {
