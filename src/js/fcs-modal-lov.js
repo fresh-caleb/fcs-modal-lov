@@ -442,6 +442,7 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
 
       // if the lastSearchTerm is not equal to the current searchTerm, then search immediate
       if (lastSearchTerm !== self._topApex.item(self.options.searchField).getValue()) {
+        self._topApex.item(self.options.searchField).setValue(lastSearchTerm);
         apex.debug.trace('FCSModalLOV - _initSearch field', self._topApex.item(self.options.searchField).getValue());
         self._getData({
           firstRow: 1,
@@ -781,7 +782,8 @@ Handlebars.registerPartial('pagination', require('./templates/partials/_paginati
 
           const itemId = self._item$[0].id;
           let searchTerm = '';
-          if (apex.item(itemId).isEmpty()) {
+          if (apex.item(itemId).isEmpty() || (self._templateData?.report?.rows?.length
+              && self._templateData.report.rows[0].displayVal != self._item$.val())) {
             searchTerm = self._item$.val();
           } else {
             searchTerm = apex.item(itemId).getValue()
